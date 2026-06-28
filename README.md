@@ -64,8 +64,9 @@ Blocking siblings (`transactions_for_blocking`, `by_owner_blocking`, `latest_blo
 ## CLI
 
 ```bash
-insiderkit-cli backfill --from 2014 --to 2025
-insiderkit-cli nightly-append
+insiderkit-cli backfill --from 2014 --to 2025   # quarterly bulk, historical
+insiderkit-cli nightly-append                    # same-day filings from the daily index
+insiderkit-cli reconcile                         # absorb amendments from the quarterly set
 insiderkit-cli manifest
 insiderkit-cli query --ticker AAPL
 insiderkit-cli query --owner "COOK TIMOTHY"
@@ -73,7 +74,9 @@ insiderkit-cli query --owner "COOK TIMOTHY"
 
 ## Data
 
-Sourced from the SEC's Insider Transactions Data Sets, which are public domain. One parquet file per year under `data/year=YYYY/insider-YYYY.parquet`, zstd-compressed, one row per reported transaction. A nightly job refreshes the current year; `data/manifest.json` carries a SHA-256 digest per file. Dates are stored as `i32` `YYYYMMDD`.
+Sourced from the SEC's Insider Transactions Data Sets and the EDGAR daily index, which are public domain. One parquet file per year under `data/year=YYYY/insider-YYYY.parquet`, zstd-compressed, one row per reported transaction. `data/manifest.json` carries a SHA-256 digest per file. Dates are stored as `i32` `YYYYMMDD`.
+
+The quarterly data set is the historical base. Because it only refreshes every few weeks, a weekday nightly job walks the EDGAR daily index from the last date present through today and merges new Form 3/4/5 filings into the current year, deduplicated by accession, so coverage is same-day (Form 4s are filed within two business days of a trade). A weekly reconcile refetches the quarterly set and supersedes the daily-index rows by accession to absorb later amendments.
 
 ## Cache
 

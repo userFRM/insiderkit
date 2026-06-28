@@ -1,8 +1,11 @@
 name: nightly
 
-# Refresh the current quarter's year file. SEC keeps the in-progress quarter's
-# _form345.zip updated through the quarter, so re-parsing it refreshes the
-# current year. 08:00 UTC weekdays = after SEC's overnight data-set refresh.
+# Same-day coverage from the EDGAR daily index. The quarterly Form 345 ZIP only
+# refreshes every few weeks, so nightly-append walks the daily index from the
+# last date present through today and merges the new filings (dedup by
+# accession) into the current-year file. On Mondays it also reconciles against
+# the freshly published quarterly ZIP to absorb amendments.
+# 08:00 UTC weekdays = after SEC's overnight publishing.
 
 on:
   schedule:
@@ -12,7 +15,7 @@ on:
 jobs:
   refresh:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 60
     permissions:
       contents: write
     env:
@@ -26,8 +29,12 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - name: Build CLI
         run: cargo build --release --bin insiderkit-cli
-      - name: Refresh data
+      - name: Pull same-day filings
         run: ./target/release/insiderkit-cli nightly-append
+        continue-on-error: true
+      - name: Reconcile against quarterly data set (Mondays)
+        if: github.event.schedule == '0 8 * * 1' || github.event_name == 'workflow_dispatch'
+        run: ./target/release/insiderkit-cli reconcile
         continue-on-error: true
       - name: Regenerate manifest
         run: ./target/release/insiderkit-cli manifest

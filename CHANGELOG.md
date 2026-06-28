@@ -14,4 +14,4 @@ Initial release.
 - Async `Insiderkit` client plus blocking siblings and one-shot free functions.
 - Query surface: `transactions_for`, `by_owner`, `latest`, `buys`, `sells`, `cluster_buys`.
 - Bundled per-year parquet (`data/year=YYYY/insider-YYYY.parquet`) served from GitHub raw with on-demand fetch, ETag revalidation, SHA-256 manifest verification, and a CDN mirror plus stale-cache fallback.
-- `insiderkit-cli` with `backfill`, `nightly-append`, `manifest`, and `query`.
+- `insiderkit-cli` with `backfill` (quarterly bulk), `nightly-append` (same-day filings from the EDGAR daily index, merged and deduplicated by accession), `reconcile` (supersede daily-index rows from the quarterly set to absorb amendments), `manifest`, and `query`.
